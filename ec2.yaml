@@ -1,0 +1,51 @@
+Parameters:
+  InstanceType:
+    Type: String
+    Description: The instance type
+  KeyName:
+    Type: String
+    Description: The KeyPair name used to SSH on the instance
+
+Resources:
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-026d3b3672c6e7b66
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash -xe
+
+          exec > /tmp/user-data.log 2>&1
+
+          yum update -y
+
+          # Install Docker
+          yum install -y docker
+          usermod -aG docker ec2-user
+          service docker start
+
+          # Install Kind
+          curl -Lo /usr/local/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-linux-amd64
+          chmod +x /usr/local/bin/kind
+
+          # Install Kubectl
+          curl -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+          chmod +x /usr/local/bin/kubectl
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Enable SSH access via port 22"
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: '22'
+          IpProtocol: tcp
+          ToPort: '22'
+
+Outputs:
+  PublicIp:
+    Value: !GetAtt [ Instance, PublicIp ]
