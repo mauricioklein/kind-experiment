@@ -9,12 +9,15 @@ $ aws ec2 create-key-pair --key-name 'kindkey' --query 'KeyMaterial' --output te
 # Set the correct permissions for the SSH key
 $ chmod 400 ./kind-key.pem
 
-# Create an EC2 instance with the dependencies pre-installed
+# Create an EC2 instance with the dependencies pre-installed.
+# (depending on the number of nodes you're gonna create, you might need 
+#  to provision a more powerful instance, which will cost you more as well. 
+#  In this case, set the 'InstanceType' parameter below)
 aws cloudformation create-stack \
   --stack-name kind \
   --template-body file://ec2.yaml \
   --parameters \
-    ParameterKey=InstanceType,ParameterValue=t2.medium \
+    ParameterKey=InstanceType,ParameterValue=t2.micro \
     ParameterKey=KeyName,ParameterValue=kindkey
 
 # Break for a coffee!
